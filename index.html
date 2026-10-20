@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ладонь и Звёзды</title>
+<meta name="description" content="Разбор ладони, матрица судьбы по дате рождения и ваш мүшел. Для саморазвития и развлечения.">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Forum&family=Golos+Text:wght@400;500;600&display=swap">
+<style>
+/* Layout: one narrow phone column, one question per screen, sticky progress on top, CTA pinned low */
+:root{
+  --ink:#191426;      /* night plum ground */
+  --ink2:#241d36;     /* raised surface */
+  --line:#3a3150;     /* hairlines */
+  --paper:#f1e8d6;    /* parchment text */
+  --mute:#a99fbd;     /* secondary text */
+  --brass:#cfa85e;    /* accent */
+  --rose:#e08f7d;     /* heart line */
+  --sage:#8fd0b5;     /* money */
+  --display:"Forum","Times New Roman",serif;
+  --body:"Golos Text",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:radial-gradient(120% 70% at 50% -10%,#2c2244 0%,var(--ink) 60%) fixed,var(--ink);color:var(--paper);font:16px/1.5 var(--body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.app{max-width:440px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;padding-block:12px 24px}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:2;background:var(--ink);padding-block:8px 12px;display:grid;grid-template-columns:32px 1fr 48px;align-items:center;gap:8px}
+.back{background:none;border:0;color:var(--mute);font-size:22px;cursor:pointer;padding:0;height:32px}
+.back:disabled{visibility:hidden}
+.brand{text-align:center;font-family:var(--display);font-size:19px;letter-spacing:.06em}
+.count{text-align:right;color:var(--mute);font-size:13px;font-variant-numeric:tabular-nums}
+.bar{grid-column:1/-1;height:3px;background:var(--line);border-radius:2px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--brass);transition:width .4s}
+main{flex:1;display:flex;flex-direction:column;gap:20px;padding-top:16px}
+h1{font-family:var(--display);font-weight:400;font-size:30px;line-height:1.15;margin:0;text-wrap:balance}
+h2{font-family:var(--display);font-weight:400;font-size:23px;margin:0}
+p{margin:0}
+.sub{color:var(--mute)}
+.opts{display:grid;gap:10px}
+.opt{width:100%;text-align:left;background:var(--ink2);border:1px solid var(--line);color:var(--paper);border-radius:12px;padding:15px 16px;font:inherit;cursor:pointer;display:flex;gap:12px;align-items:center}
+.opt:hover{border-color:var(--mute)}
+.opt[aria-pressed="true"]{border-color:var(--brass);background:#2e2540}
+.opt .g{font-family:var(--display);font-size:22px;color:var(--brass);width:26px;text-align:center}
+.cta{margin-top:auto;width:100%;background:var(--brass);color:#1c1526;border:0;border-radius:12px;padding:16px;font:600 16px var(--body);cursor:pointer;text-align:center;text-decoration:none;display:block}
+.cta:disabled{opacity:.35;cursor:default}
+.cta.alt{background:none;border:1px solid var(--brass);color:var(--brass)}
+.ghost{background:none;border:0;color:var(--mute);font:inherit;text-decoration:underline;cursor:pointer;padding:4px}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+input,select{width:100%;background:var(--ink2);border:1px solid var(--line);color:var(--paper);border-radius:12px;padding:14px 16px;font:inherit}
+label{display:grid;gap:6px;font-size:14px;color:var(--mute)}
+.sign{display:flex;gap:14px;align-items:center;background:var(--ink2);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.sign b{font-family:var(--display);font-size:40px;font-weight:400;color:var(--brass);line-height:1}
+.palm{position:relative;aspect-ratio:3/4;max-width:100%;border:1px dashed var(--line);border-radius:16px;overflow:hidden;background:var(--ink2);display:grid;place-items:center}
+.palm img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.palm svg{position:absolute;inset:0;width:100%;height:100%}
+.palm path{fill:none;stroke-width:1.6;stroke-linecap:round;stroke-dasharray:300;stroke-dashoffset:300}
+.palm.scan path{animation:draw 1.6s ease forwards}
+.palm.scan path:nth-child(2){animation-delay:.5s}.palm.scan path:nth-child(3){animation-delay:1s}.palm.scan path:nth-child(4){animation-delay:1.5s}
+.palm .ray{position:absolute;left:0;right:0;height:2px;background:var(--brass);box-shadow:0 0 18px 4px #cfa85e88;top:0;animation:ray 2.2s linear infinite;display:none}
+.palm.scan .ray{display:block}
+.palm .hint{color:var(--mute);text-align:center;padding:24px;font-size:14px}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes ray{0%{top:0}50%{top:100%}100%{top:0}}
+.steps{display:grid;gap:12px;font-size:15px}
+.steps div{display:flex;justify-content:space-between;color:var(--mute)}
+.steps div.on{color:var(--paper)}
+.steps div.ok::after{content:"✓";color:var(--brass)}
+.meter{height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.meter i{display:block;height:100%;width:0;background:var(--brass)}
+.sec{display:grid;gap:8px;padding-block:16px;border-top:1px solid var(--line)}
+.sec .k{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--brass)}
+.locked{position:relative}
+.locked .blur{filter:blur(6px);user-select:none;pointer-events:none}
+.facts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
+.facts div{background:var(--ink2);border-radius:10px;padding:10px 4px}
+.facts b{display:block;font-family:var(--display);font-size:22px;font-weight:400;color:var(--brass);font-variant-numeric:tabular-nums}
+.facts span{font-size:12px;color:var(--mute)}
+.matrix{background:var(--ink2);border:1px solid var(--line);border-radius:16px;padding:8px}
+.matrix svg{display:block;width:100%;max-width:300px;margin:0 auto}
+.legend{display:grid;grid-template-columns:1fr auto;gap:6px 12px;font-size:14px;margin-top:10px;padding:0 8px 8px}
+.legend b{color:var(--brass);font-weight:500;text-align:right;white-space:nowrap}
+.lines{display:grid;grid-template-columns:auto 1fr 40px;gap:8px 10px;align-items:center;font-size:14px}
+.lines b{font-weight:500;text-align:right;font-variant-numeric:tabular-nums}
+.palm canvas{position:absolute;inset:0;width:100%;height:100%}
+.warn{color:var(--rose);font-size:14px}
+.matrix text{font-family:var(--body);text-anchor:middle;dominant-baseline:central}
+.plans{display:grid;gap:10px}
+.plan{display:flex;justify-content:space-between;align-items:center}
+.plan s{color:var(--mute);font-size:13px;margin-right:6px}
+.badge{font-size:11px;background:var(--rose);color:#1c1526;border-radius:20px;padding:2px 8px;margin-left:8px}
+.box{display:grid;gap:12px;background:var(--ink2);border:1px solid var(--brass);border-radius:16px;padding:16px}
+.box ol{margin:0;padding-left:20px;display:grid;gap:6px}
+.row{display:grid;grid-template-columns:1fr auto;gap:8px}
+.row button{background:var(--brass);color:#1c1526;border:0;border-radius:12px;padding:0 18px;font:600 15px var(--body);cursor:pointer}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.err{color:var(--rose);font-size:14px}
+.note{font-size:12px;color:var(--mute);text-align:center}
+footer{font-size:11px;color:var(--mute);text-align:center;padding-top:20px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.palm path{stroke-dashoffset:0}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <button class="back" id="back" aria-label="Назад">←</button>
+    <div class="brand">Ладонь и Звёзды</div>
+    <div class="count" id="count"></div>
+    <div class="bar"><i id="bar"></i></div>
+  </header>
+  <main id="view"></main>
+  <footer>Для саморазвития и развлечения. Не является медицинским, финансовым или юридическим советом.<br>
+    Цены: полный отчёт 1 990 ₸ · с прогнозом на год 2 990 ₸ · прогноз на год 1 000 ₸ · совместимость 1 490 ₸. Оплата картой Visa / Mastercard, разовый платёж.<br>
+    <a href="oferta.html" style="color:inherit">Оферта и возврат</a> · <a href="privacy.html" style="color:inherit">Конфиденциальность</a><br>
+    ИП Doitboy · ИИН/БИН [ИИН] · г. Астана, ул. Бараева, 18/1-243 · <a href="https://wa.me/77784714585" style="color:inherit">+7 778 471 45 85</a></footer>
+</div>
+<input type="file" id="file" accept="image/*" capture="environment" hidden>
+
+<script>
+// ===== НАСТРОЙКИ ВЛАДЕЛЬЦА: поменяй здесь и больше нигде =====
+const CONFIG={
+  wa:"77784714585",          // WhatsApp для чеков и заявок, только цифры
+  tg:"",                     // Telegram ник без @ (пусто = кнопки нет)
+  kaspi:"+7 700 000 00 00",  // номер для перевода
+  receiver:"ИП Doitboy",     // как получатель видится в Kaspi
+  pay:{full:"",year:"",yearup:"",pair:""}, // ссылки оплаты (Forte / Freedom Pay / Kaspi), когда появятся
+  form:"",                   // Google Form ".../formResponse" для сбора контактов (пусто = не отправлять)
+  fields:{name:"entry.1",contact:"entry.2",date:"entry.3",order:"entry.4",stage:"entry.5"},
+  salt:"alash-palm-2026"     // секрет для кодов; поменяй один раз до запуска
+};
+const PLANS={
+  full:{t:"Полный отчёт: ладонь, матрица, мүшел",p:1990,old:3990,u:["full"]},
+  year:{t:"Полный отчёт и прогноз на год",p:2990,old:5990,u:["full","year"],hit:1},
+  yearup:{t:"Прогноз на год по матрице",p:1000,old:1990,u:["year"]},
+  pair:{t:"Совместимость пары",p:1490,old:2990,u:["pair"]}
+};
+
+const ZODIAC=[["Козерог","♑",1,19],["Водолей","♒",2,18],["Рыбы","♓",3,20],["Овен","♈",4,19],["Телец","♉",5,20],["Близнецы","♊",6,20],["Рак","♋",7,22],["Лев","♌",8,22],["Дева","♍",9,22],["Весы","♎",10,22],["Скорпион","♏",11,21],["Стрелец","♐",12,21],["Козерог","♑",13,0]];
+const ELEMENT={Овен:"Огонь",Лев:"Огонь",Стрелец:"Огонь",Телец:"Земля",Дева:"Земля",Козерог:"Земля",Близнецы:"Воздух",Весы:"Воздух",Водолей:"Воздух",Рак:"Вода",Скорпион:"Вода",Рыбы:"Вода"};
+const MATCH={Огонь:["Овен","Лев","Стрелец","Близнецы","Весы"],Земля:["Телец","Дева","Козерог","Рак","Скорпион"],Воздух:["Близнецы","Весы","Водолей","Лев","Стрелец"],Вода:["Рак","Скорпион","Рыбы","Телец","Дева"]};
+function zodiac(d){const m=d.getMonth()+1,day=d.getDate();const z=ZODIAC.find(([, ,mm,last])=>m<mm||(m===mm&&day<=last))||ZODIAC[0];return{name:z[0],glyph:z[1]}}
+
+// deterministic per-user randomness: same answers → same reading
+function rng(str){let h=1779033703^str.length;for(let i=0;i<str.length;i++){h=Math.imul(h^str.charCodeAt(i),3432918353);h=h<<13|h>>>19}
+  return()=>{h=Math.imul(h^h>>>16,2246822507);h=Math.imul(h^h>>>13,3266489909);return((h^=h>>>16)>>>0)/4294967296}}
+const pick=(r,a)=>a[Math.floor(r()*a.length)];
+const esc=s=>String(s).replace(/[&<>"']/g,c=>`&#${c.charCodeAt(0)};`);
+const money=n=>n.toLocaleString("ru")+" ₸";
+
+// ===== Матрица судьбы: 22 аркана =====
+// n — название, k — суть (бесплатный тизер), p — личность, m — деньги, l — отношения, t — урок кармического хвоста, y — тема года
+const ARC=[null,
+ {n:"Маг",k:"Сила начала: вы запускаете то, что другие только обсуждают.",p:"Быстрый ум, харизма, умение убеждать. Вы сильнее всего, когда сами держите инициативу. Тень: хвататься за десять идей и не доводить ни одну.",m:"Деньги идут через слово и инициативу: продажи, переговоры, свои проекты, обучение других. Рутина по чужому плану гасит этот поток.",l:"Вам нужен человек, которого интересно удивлять и с кем можно спорить на равных. Скука в паре для вас опаснее ссор.",t:"Урок прошлого: дар убеждения использовался ради выгоды. Задача сейчас — говорить правду и отвечать за свои слова.",y:"Год старта: начинайте новое, заявляйте о себе, учитесь говорить и продавать."},
+ {n:"Жрица",k:"Сила интуиции: вы считываете людей раньше, чем они заговорят.",p:"Наблюдательность, глубина, умение хранить тайны. Вы много знаете и мало показываете. Тень: молчать о главном и копить обиды.",m:"Доход через знания и доверие: консультации, аналитика, обучение, работа с информацией. Лучше всего зарабатывается там, где вы эксперт.",l:"Вы раскрываетесь медленно, и это нормально. Рядом нужен спокойный человек, которому не всё надо объяснять словами.",t:"Урок: прятать свою силу из страха осуждения. Задача — делиться тем, что вы чувствуете и знаете.",y:"Год тишины и учёбы: меньше шума, больше наблюдений. Важные ответы придут через чутьё."},
+ {n:"Императрица",k:"Сила изобилия: рядом с вами всё растёт и расцветает.",p:"Тепло, вкус, умение создавать красоту и уют. Люди тянутся к вам за заботой. Тень: растворяться в других и забывать о себе.",m:"Деньги любят у вас красоту и удовольствие: дизайн, еда, мода, бьюти, творчество — всё, что делает жизнь приятнее.",l:"Вам важно чувствовать себя желанным и ценным. В отношениях вы щедры, но нуждаетесь во взаимности, а не в потребителе.",t:"Урок: обесценивать себя и жить только ради семьи. Задача — позволить себе радость без чувства вины.",y:"Год роста: хорошее время для творчества, семьи, обновления дома и образа."},
+ {n:"Император",k:"Сила порядка: вы строите систему там, где был хаос.",p:"Воля, ответственность, лидерство. Вы умеете брать решения на себя. Тень: жёсткость, контроль и желание, чтобы всё было по-вашему.",m:"Доход через управление и структуру: своё дело, руководство, строительство, госсектор. Деньги приходят, когда вы берёте ответственность.",l:"Вы надёжная опора, но партнёру нужно не только слушаться, но и быть услышанным. Мягкость — не слабость.",t:"Урок: власть без заботы. Задача — руководить, уважая свободу других.",y:"Год фундамента: наводите порядок в делах и документах, стройте длинный план."},
+ {n:"Иерофант",k:"Сила учителя: вы передаёте знание и ценности.",p:"Мудрость, принципы, уважение к традициям и старшим. К вам идут за советом. Тень: поучать и считать, что знаете, как правильно всем.",m:"Деньги через обучение, наставничество, консультации, работу в больших системах. Ваш опыт сам по себе продукт.",l:"Вам важны общие ценности и серьёзные намерения. Союз строится надолго: знакомство с семьёй, традиции, уважение.",t:"Урок: навязывать свою истину. Задача — учить примером и слышать другое мнение.",y:"Год учёбы и наставников: учитесь, получайте документы и навыки, найдите своего учителя."},
+ {n:"Влюблённые",k:"Сила выбора и любви: вы живёте сердцем.",p:"Обаяние, дружелюбие, чувство красоты, умение объединять людей. Тень: страх выбора и зависимость от чужого одобрения.",m:"Деньги через людей и партнёрство: команда, сервис, красота — всё, где важно нравиться и договариваться.",l:"Любовь — центральная тема вашей жизни. Выбирайте сердцем и головой одновременно и не теряйте себя ради другого.",t:"Урок: выбор из страха или нарушенное слово. Задача — делать честный выбор и отвечать за него.",y:"Год выбора: решения в любви и партнёрстве. Выбирайте осознанно."},
+ {n:"Колесница",k:"Сила движения: вы созданы для цели и победы.",p:"Целеустремлённость, энергия, любовь к скорости и переменам. Тень: жить на бегу и не замечать, куда едешь.",m:"Доход через движение: поездки, логистика, спорт, проекты с дедлайнами, карьерный рост. Деньги приходят, когда цель ясна.",l:"Нужен партнёр-попутчик, который не тормозит, а едет рядом. Сидение на месте вас тяготит.",t:"Урок: идти по головам ради результата. Задача — побеждать, не разрушая других, и выбирать свою цель, а не чужую.",y:"Год рывка: поездки, переезды, повышение, смелые шаги вперёд."},
+ {n:"Справедливость",k:"Сила равновесия: вы чувствуете, что честно, а что нет.",p:"Логика, порядочность, умение взвешивать. Вам доверяют решать споры. Тень: строго судить себя и других, жить по правилам вместо жизни.",m:"Деньги через документы, право, финансы, экспертизу, договоры. Всё, что сделано честно и прозрачно, приносит доход.",l:"Вам важен равный вклад в отношения. Когда баланс нарушен, вы остываете. Говорите об этом раньше.",t:"Урок: несправедливость к другим или к себе. Задача — быть честным без жестокости.",y:"Год баланса: закрываются старые долги, оформляются договоры, всё возвращается по заслугам."},
+ {n:"Отшельник",k:"Сила мудреца: глубина вместо шума.",p:"Аналитический ум, самостоятельность, тяга к знаниям и тишине. Тень: уход в себя и недоверие к людям.",m:"Доход через глубокое знание одного дела: исследования, IT, наставничество, онлайн-работа. Вас ценят за качество, а не за громкость.",l:"Вам нужно личное пространство даже в паре. Тот, кто это понимает, получит самого верного человека.",t:"Урок: изоляция и гордыня знания. Задача — делиться опытом с теми, кому он нужен.",y:"Год переосмысления: меньше людей, больше смысла. Хорошо для учёбы и поиска своего пути."},
+ {n:"Колесо Фортуны",k:"Сила удачи и потока: вам везёт, когда вы в движении.",p:"Лёгкость, оптимизм, умение оказаться в нужном месте. Тень: ждать удачу вместо действий.",m:"Деньги любят у вас обмен и движение: торговля, поездки, знакомства, удачные случаи. Важно не упускать шанс.",l:"Отношения развиваются через случайные встречи и совместные приключения. Рутина — главный враг вашей пары.",t:"Урок: пустить жизнь на самотёк. Задача — ловить шанс и самому крутить колесо.",y:"Год поворота: неожиданные возможности. Чаще говорите «да» новому."},
+ {n:"Сила",k:"Сила характера: вы справляетесь с тем, что ломает других.",p:"Выносливость, страсть, внутренний огонь, способность много работать. Тень: перегруз, вспыльчивость, желание всё вытянуть одному.",m:"Доход через труд и энергию: спорт, своё дело, ведение людей. Деньги идут, когда вы не перегораете.",l:"В вас много страсти. Партнёру важно выдерживать ваш темперамент, а вам — смягчать силу нежностью.",t:"Урок: давление и гнев. Задача — направлять силу на созидание.",y:"Год проверки на прочность: много работы и энергии. Берегите ресурс и отдыхайте."},
+ {n:"Повешенный",k:"Сила иного взгляда: вы видите мир под другим углом.",p:"Тонкость, отзывчивость, нестандартное мышление. Тень: роль жертвы и застревание в ожидании.",m:"Деньги через нестандартное: творчество, помощь людям, психология, духовные практики. Не работайте бесплатно из чувства долга.",l:"Вы склонны отдавать больше, чем получаете. Ваша пара — та, где можно не спасать, а просто быть.",t:"Урок: жить ради других. Задача — помогать, не теряя себя.",y:"Год паузы: не всё будет быстро. Используйте время, чтобы посмотреть на ситуацию иначе."},
+ {n:"Трансформация",k:"Сила обновления: вы умеете закрывать старое и начинать с нуля.",p:"Смелость, решительность, способность к переменам. Тень: страх перемен или, наоборот, тяга всё ломать.",m:"Доход через перемены: антикризисная работа, ремонт, переработка, услуги, где нужно что-то преобразить.",l:"В отношениях вы проходите через глубокие перемены. Отпускайте то, что ушло, и не держитесь за прошлое.",t:"Урок: держаться за отжившее. Задача — отпускать вовремя и не бояться новой главы.",y:"Год конца и начала: что-то завершится, чтобы освободить место новому."},
+ {n:"Умеренность",k:"Сила гармонии: вы находите золотую середину.",p:"Спокойствие, терпение, умение соединять разное в одно целое. Тень: пассивность и уход от любого конфликта.",m:"Деньги через заботу и гармонию: сервис, творчество, педагогика, работа с людьми без спешки.",l:"Вы приносите в пару мир. Не путайте спокойствие с равнодушием и говорите о своих желаниях.",t:"Урок: крайности. Задача — баланс: работа и отдых, я и другие.",y:"Год восстановления: спокойный темп, гармония, налаживание отношений."},
+ {n:"Дьявол",k:"Сила притяжения: у вас мощная энергия денег и страсти.",p:"Харизма, деловая хватка, умение влиять. Тень: зависимости, манипуляции, жизнь ради выгоды.",m:"Сильный денежный аркан: своё дело, продажи, маркетинг, влияние, крупные сделки. Главное — честные правила игры.",l:"Притяжение у вас сильное. Опасность — ревность и созависимость. Здоровая пара строится на свободе.",t:"Урок: соблазны и зависимость. Задача — управлять своей силой, а не служить ей.",y:"Год искушений и денег: есть возможности заработать, но и риск увлечься. Держите границы."},
+ {n:"Башня",k:"Сила созидателя: вы строите новое на месте старого.",p:"Энергия, смелость, умение быстро перестраиваться. Тень: гордыня и желание снести всё, что не по плану.",m:"Деньги через стройку, крупные проекты, перемены в системах. Не ставьте всё на одну карту.",l:"Ваша пара проходит испытания. Отношения, которые выдержали бурю, становятся крепче всех.",t:"Урок: гордыня и жёсткие стены. Задача — гибкость и готовность перестроиться.",y:"Год перестройки: возможны резкие перемены. Рушится то, что держалось на неправде."},
+ {n:"Звезда",k:"Сила вдохновения: вы светите другим.",p:"Талант, вкус, мечтательность, умение вдохновлять. Тень: витать в облаках и бояться показать себя.",m:"Деньги через публичность и творчество: блог, искусство, дизайн — всё, где вас видят. Не стесняйтесь заявлять о себе.",l:"Вам нужен человек, который восхищается вами и поддерживает мечты. Рядом с критиком вы гаснете.",t:"Урок: спрятанный талант или звёздная болезнь. Задача — делиться даром с людьми.",y:"Год признания: покажите свою работу, начните блог, заявите о себе."},
+ {n:"Луна",k:"Сила воображения: вы чувствуете невидимое.",p:"Интуиция, богатый внутренний мир, творческая фантазия. Тень: тревожность, страхи, иллюзии.",m:"Доход через образы и чувства: кино, фото, музыка, психология, работа с атмосферой.",l:"Вы тонко чувствуете партнёра. Проверяйте страхи фактами и не додумывайте за другого.",t:"Урок: самообман. Задача — отличать интуицию от тревоги и доверять себе.",y:"Год неясностей: не всё понятно сразу. Доверяйте чутью, но проверяйте детали."},
+ {n:"Солнце",k:"Сила света: вы заряжаете людей теплом и радостью.",p:"Открытость, щедрость, лидерство через радость. Тень: желание быть в центре внимания и обида, когда этого нет.",m:"Деньги через лидерство и публичность: своё дело, выступления, праздники, работа с детьми. Чем ярче вы, тем больше приходит.",l:"Вам нужна тёплая пара, где можно смеяться и праздновать. Холод и критика вас истощают.",t:"Урок: эгоизм. Задача — светить, не затмевая других.",y:"Год успеха: удачное время для публичности, семьи и своих проектов."},
+ {n:"Суд",k:"Сила рода: ваша опора — семья и корни.",p:"Мудрость, чувство справедливости, связь с родом и традициями. Тень: застревать в прошлом и в старых обидах на семью.",m:"Деньги через семью и сообщество: семейное дело, работа с людьми, история, обучение. Помогает поддержка рода.",l:"Семья для вас — основа. Не переносите в пару сценарии родителей, стройте свои правила.",t:"Урок: разрыв с родом и непрощённые обиды. Задача — принять корни и взять от них силу.",y:"Год пробуждения: встречи с роднёй, возвращение к важному, новые решения о будущем."},
+ {n:"Мир",k:"Сила масштаба: вам тесно в рамках, ваш размах — весь мир.",p:"Широта взглядов, дипломатия, любовь к путешествиям и людям разных культур. Тень: распыляться и не завершать начатое.",m:"Деньги через масштаб и связи: международные проекты, туризм, онлайн, работа на широкую аудиторию.",l:"Вам нужен партнёр с широкими взглядами, с которым можно путешествовать и расти. Ограничения убивают чувства.",t:"Урок: страх выйти за привычные границы. Задача — расширять свой мир и завершать начатое.",y:"Год завершения цикла: подводите итоги и выходите на новый уровень."},
+ {n:"Шут",k:"Сила свободы: вы живёте легко и не боитесь нового.",p:"Спонтанность, юмор, открытость, креативность. Тень: безответственность и бегство от обязательств.",m:"Деньги через свободу и творчество: фриланс, поездки, шоу, работа без жёстких рамок. Скучная работа вас опустошает.",l:"Вам нужен партнёр-друг, с которым весело. Давление и контроль — верный способ вас потерять.",t:"Урок: безответственность. Задача — сохранить лёгкость, но держать слово.",y:"Год свободы: новые знакомства, эксперименты, смелые решения."}
+];
+const dsum=n=>[...String(n)].reduce((a,c)=>a+ +c,0);
+const r22=n=>{while(n>22)n=dsum(n);return n};
+function matrix(date){
+  const [y,m,d]=date.split("-").map(Number);
+  const A=r22(d),B=r22(m),C=r22(dsum(y)),D=r22(A+B+C),E=r22(A+B+C+D);
+  const sky=r22(B+D),earth=r22(A+C),X=r22(C+D),D1=r22(D+E),F=r22(A+B),G=r22(B+C),I=r22(A+D);
+  let life=dsum(String(d)+m+y);while(life>9)life=dsum(life);
+  return{A,B,C,D,E,F,G,I,sky,earth,purpose:r22(sky+earth),X,money:r22(C+X),love:r22(D+X),tail:[D,D1,r22(D+D1)],life,
+    year:yy=>r22(A+B+r22(dsum(yy)))}}
+
+// ===== Мүшел: 12-летний казахский цикл, год считаем от Наурыза (22 марта) =====
+const MUSHEL=[["Тышқан","Мышь","Находчивость и бережливость: вы выкрутитесь из любой ситуации и всегда найдёте ресурс."],
+ ["Сиыр","Корова","Трудолюбие и терпение: вы строите медленно, но навсегда."],
+ ["Барыс","Барс","Смелость и гордость лидера: вас трудно заставить, но легко вдохновить."],
+ ["Қоян","Заяц","Мягкость и дипломатия: чутьё на опасность и на хороших людей."],
+ ["Ұлу","Улу (дракон)","Масштаб и энергия: вы мечтаете о большом и умеете увлечь других."],
+ ["Жылан","Змея","Мудрость и выдержка: вы умеете ждать нужного момента."],
+ ["Жылқы","Лошадь","Свобода и скорость: любовь к движению и простору, как у самого почитаемого животного степи."],
+ ["Қой","Овца","Доброта и вкус: вы создаёте мир вокруг себя и заботитесь о близких."],
+ ["Мешін","Обезьяна","Ум и ловкость: вы быстро учитесь и находите нестандартные ходы."],
+ ["Тауық","Курица","Честность и порядок: вы держите слово и любите, когда всё вовремя."],
+ ["Ит","Собака","Верность и справедливость: вы защищаете своих и не терпите фальши."],
+ ["Доңыз","Кабан","Щедрость и прямота: вы умеете радоваться жизни и делиться ею."]];
+const PHASE=[[1,"Мүшел жылы — год вашего зверя. Цикл начинается заново: время обновления, по традиции его встречают садақа и подарком вещи с себя."],
+ [4,"Начало цикла: закладываете основу следующих 12 лет. Хорошо начинать, учиться, знакомиться."],
+ [8,"Середина цикла: время реализации. То, что заложено в начале, начинает приносить плоды."],
+ [11,"Сбор урожая: подводите итоги, закрепляйте результаты, отдавайте долги."],
+ [12,"Канун мүшела: год подготовки. Завершайте старое, чтобы войти в новый цикл налегке."]];
+const cycleYear=d=>d.getFullYear()-(d.getMonth()<2||(d.getMonth()===2&&d.getDate()<22)?1:0);
+const animal=cy=>MUSHEL[((cy-2020)%12+12)%12];
+function mushel(date,now=new Date()){
+  const b=cycleYear(new Date(date+"T12:00")),n=cycleYear(now),diff=n-b,pos=diff%12+1;
+  const k=pos===1&&diff>0?diff/12:Math.ceil(diff/12);
+  return{a:animal(b),cur:animal(n),pos,now:pos===1&&diff>0,next:b+12*k,jas:12*k+1,phase:PHASE.find(([p])=>pos<=p)[1]}}
+
+// self-check: 15.05.1990 → A15 B5 C19 D12 E6; Жылқы; 01.02.1990 → Жылан (до Наурыза)
+(()=>{const M=matrix("1990-05-15");console.assert(M.A===15&&M.B===5&&M.C===19&&M.D===12&&M.E===6,"matrix");
+  console.assert(mushel("1990-05-15").a[0]==="Жылқы"&&mushel("1990-02-01").a[0]==="Жылан","mushel");
+  const t=mushel("2014-05-01",new Date("2026-10-21"));console.assert(t.now&&t.jas===13,"mushel jas")})();
+
+// ===== ладонь: трактовки по типовым формам линий =====
+const TEXT={
+ heart:["Линия сердца длинная и плавно уходит к указательному пальцу. Вы привязываетесь глубоко и надолго, но долго присматриваетесь к человеку, прежде чем открыться.",
+  "Линия сердца заканчивается между указательным и средним пальцем. Вы умеете держать баланс между чувствами и разумом, и партнёры ценят в вас надёжность.",
+  "Линия сердца прямая и чёткая. Вы говорите о чувствах прямо, без игр, и ждёте того же в ответ. Недосказанность ранит вас сильнее ссор.",
+  "На линии сердца видна небольшая развилка. Это знак человека, у которого в жизни будет одна большая история любви, способная всё изменить."],
+ head:["Линия головы слегка изгибается вниз. У вас сильное воображение: решения приходят интуитивно, а логика подключается позже, чтобы их подтвердить.",
+  "Линия головы длинная и прямая. Вы мыслите системно, хорошо считаете риски и редко принимаете решения на эмоциях.",
+  "Линия головы начинается отдельно от линии жизни. Вы рано научились полагаться на себя и не боитесь идти против мнения большинства.",
+  "Линия головы короткая и глубокая. Вы быстро схватываете суть, не любите долгих обсуждений и лучше всего работаете, когда есть ясная цель."],
+ life:["Линия жизни широкой дугой огибает большой палец. Это говорит о большом запасе энергии и способности быстро восстанавливаться после трудных периодов.",
+  "Линия жизни глубокая, с ответвлением вверх в середине. Впереди период, когда ваши усилия начнут окупаться заметнее, чем раньше.",
+  "Линия жизни идёт близко к большому пальцу. Вам важно беречь силы: отдых для вас не роскошь, а источник удачи.",
+  "Линия жизни с небольшим разрывом и параллельной линией рядом. Это классический знак смены курса: переезда, новой работы или нового круга людей."],
+ fate:["Линия судьбы начинается от запястья и уверенно идёт вверх. Вы рано почувствовали своё направление и последовательно к нему движетесь.",
+  "Линия судьбы появляется ближе к середине ладони. Ваш главный успех придёт не в юности, а после того, как вы найдёте дело по себе.",
+  "Линия судьбы раздваивается. У вас два сильных таланта, и лучший путь там, где их можно соединить.",
+  "Линия судьбы слабая, но рядом заметна линия Солнца. Ваш путь вы строите сами, и признание придёт через то, что вы создаёте своими руками."]
+};
+const FOCUS={love:"Любовь",career:"Карьера",money:"Деньги",energy:"Энергия",self:"Предназначение"};
+const ADVICE={
+ love:["В ближайшие недели ждите разговора, который многое прояснит в отношениях. Начните его первым.","Человек из прошлого может напомнить о себе. Решите заранее, хотите ли вы открыть эту дверь снова."],
+ career:["Ваш сильный период для просьб о повышении и новых предложений начинается в конце месяца.","Проект, который вы откладываете, принесёт больше, чем вы ожидаете. Начните с малого шага."],
+ money:["Возможности приходят через знакомых и рекомендации. Не стесняйтесь рассказывать, чем вы занимаетесь.","Отложите крупные покупки на две недели: скоро может появиться вариант выгоднее."],
+ energy:["Ваш ресурс зависит от режима сильнее, чем кажется. Ранний сон даст больше сил, чем кофе.","Добавьте прогулки: движение на свежем воздухе — ваш лучший способ переключиться."],
+ self:["Вам подходит роль наставника. То, что кажется вам простым, другим нужно услышать от вас.","Запишите три вещи, которые вы делали в детстве часами. В них подсказка о вашем деле."]
+};
+
+// ===== состояние + сохранение у клиента =====
+const S={gender:null,date:"",time:"",status:null,focus:[],hand:null,photo:null,name:"",contact:"",own:[],plan:"year",payOpen:false,pdate:"",order:""};
+let step=0;
+const store={get(){try{return JSON.parse(localStorage.getItem("palm2")||"null")}catch{return null}},
+  set(){try{const {photo,...rest}=S;localStorage.setItem("palm2",JSON.stringify({...rest,step}))}catch{}}};
+const saved=store.get();
+if(saved){S.order=saved.order||"";if(saved.step>=10){Object.assign(S,saved,{photo:null,payOpen:false});step=10}}
+if(!S.order)S.order=String(10000+Math.floor(Math.random()*90000));
+const has=p=>S.own.includes(p);
+
+// unlock code = f(order, product, salt). ponytail: salt is visible in page source, so a tech-savvy buyer can forge codes; switch to a payment provider's success page/webhook when volume justifies it
+function code(order,prod){let h=2166136261;for(const c of order+"|"+prod+"|"+CONFIG.salt){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return String((h>>>0)%1000000).padStart(6,"0")}
+function lead(stage){if(!CONFIG.form)return;const f=new FormData(),F=CONFIG.fields;
+  f.append(F.name,S.name);f.append(F.contact,S.contact);f.append(F.date,S.date);f.append(F.order,S.order);f.append(F.stage,stage);
+  fetch(CONFIG.form,{method:"POST",mode:"no-cors",body:f}).catch(()=>{})}
+const wa=t=>`https://wa.me/${CONFIG.wa}?text=${encodeURIComponent(t)}`;
+const contactLinks=(t,label)=>`<div class="${CONFIG.tg?"two":""}"><a class="cta" target="_blank" rel="noopener" href="${wa(t)}">${label} в WhatsApp</a>${CONFIG.tg?`<a class="cta alt" target="_blank" rel="noopener" href="https://t.me/${CONFIG.tg}">Telegram</a>`:""}</div>`;
+
+const view=document.getElementById("view");
+const opt=(key,val,label,glyph,multi)=>`<button class="opt" data-k="${key}" data-v="${val}" ${multi?'data-multi':''} aria-pressed="${multi?S[key].includes(val):S[key]===val}"><span class="g">${glyph}</span>${label}</button>`;
+const okContact=v=>v.replace(/\D/g,"").length>=10||/^@\w{4,}$/.test(v.trim());
+
+const STEPS=[
+ ()=>`<h1>Узнайте, что записано на вашей ладони</h1><p class="sub">Минутный опрос, фото руки, матрица судьбы по дате рождения и ваш мүшел — в одном разборе.</p><p>Выберите пол, чтобы начать</p>
+   <div class="opts">${opt("gender","f","Женщина","♀")}${opt("gender","m","Мужчина","♂")}</div>`,
+ ()=>`<h1>Когда вы родились?</h1><p class="sub">По дате рассчитаем матрицу судьбы, знак зодиака и ваш мүшел.</p>
+   <label for="date">Дата рождения<input type="date" id="date" min="1920-01-01" max="2012-12-31" value="${S.date}"></label><div id="sign"></div>
+   <button class="cta" id="next" ${S.date?"":"disabled"}>Продолжить</button>`,
+ ()=>`<h1>Во сколько вы родились?</h1><p class="sub">Можно приблизительно. Если не знаете, пропустите.</p>
+   <label for="time">Время рождения<input type="time" id="time" value="${S.time}"></label>
+   <button class="cta" id="next">Продолжить</button><button class="ghost" id="skip">Не знаю</button>`,
+ ()=>`<h1>Ваше семейное положение?</h1><div class="opts">${opt("status","single","Свободна / свободен","○")}${opt("status","pair","В отношениях","◎")}${opt("status","married","В браке","⚭")}${opt("status","hard","Всё сложно","∞")}</div>`,
+ ()=>`<h1>Что сейчас важнее всего?</h1><p class="sub">Можно выбрать несколько.</p><div class="opts">${Object.entries(FOCUS).map(([k,v],i)=>opt("focus",k,v,"✦☉☽✚✧"[i],true)).join("")}</div>
+   <button class="cta" id="next" ${S.focus.length?"":"disabled"}>Продолжить</button>`,
+ ()=>`<h1>Какая рука у вас ведущая?</h1><p class="sub">По ведущей руке читают то, что вы создали сами. По второй — то, что дано от рождения.</p>
+   <div class="opts">${opt("hand","r","Правая","✋")}${opt("hand","l","Левая","🤚")}</div>`,
+ ()=>`<h1>Сфотографируйте ладонь</h1><p class="sub">Раскройте ${S.hand==="l"?"левую":"правую"} ладонь, пальцы вверх, при хорошем свете.</p>
+   <div class="palm" id="palm">${S.photo?`<img src="${S.photo}" alt="Ваша ладонь">`:'<div class="hint">Нажмите, чтобы сделать фото<br>или выбрать из галереи</div>'+lines()}</div>
+   ${S.scan&&S.scan.skin<.15?'<p class="warn">Ладонь видна плохо. Лучше переснять при дневном свете на светлом фоне — так линии прочитаются точнее.</p>':""}
+   <button class="cta" id="next">${S.photo?"Анализировать":"Сделать фото"}</button>${S.photo?'<button class="ghost" id="retake">Переснять</button>':'<button class="ghost" id="skip">Пропустить</button>'}`,
+ ()=>`<h1>Как вас зовут?</h1><p class="sub">Имя будет в вашем отчёте.</p>
+   <label for="name">Имя<input id="name" autocomplete="given-name" maxlength="30" value="${esc(S.name)}"></label>
+   <button class="cta" id="next" ${S.name.trim()?"":"disabled"}>Продолжить</button>`,
+ ()=>`<h1>Куда прислать копию разбора?</h1><p class="sub">Номер WhatsApp или ник в Telegram. Пришлём ссылку на отчёт и подарок к мүшел жылы. Без спама.</p>
+   <label for="contact">WhatsApp или @telegram<input id="contact" type="text" inputmode="tel" autocomplete="tel" maxlength="40" placeholder="+7 7__ ___ __ __" value="${esc(S.contact)}"></label>
+   <button class="cta" id="next" ${okContact(S.contact)?"":"disabled"}>Получить разбор</button>
+   <p class="note">Нажимая кнопку, вы соглашаетесь получить сообщение с разбором. Контакт не передаётся третьим лицам.</p>`,
+ ()=>`<h1>Читаем вашу ладонь</h1><div class="palm scan">${S.photo&&PTS?'<canvas id="cv" width="450" height="600"></canvas>':lines()}<div class="ray"></div></div>
+   <div class="steps" id="st">${["Выделяем линии ладони","Матрица судьбы: 22 аркана","Мүшел: ваш цикл","Связь со знаком","Собираем отчёт"].map(t=>`<div>${t}</div>`).join("")}</div><div class="meter"><i id="m"></i></div>`,
+ report
+];
+const QUESTIONS=STEPS.length-1;
+
+function lines(){ // fallback when no photo: typical line positions, palm facing camera, fingers up; thumb on the right for the right hand
+  const t=S.hand!=="l"?' transform="translate(300 0) scale(-1 1)"':"";
+  return `<svg viewBox="0 0 300 400" aria-hidden="true"><g${t}>
+  <path stroke="var(--rose)" d="M250 170 C200 150 140 155 80 180"/>
+  <path stroke="var(--brass)" d="M240 205 C190 200 130 215 85 245"/>
+  <path stroke="#8fd0b5" d="M95 175 C60 230 70 300 120 360"/>
+  <path stroke="#b6a6ff" d="M160 365 C158 300 160 240 170 160"/></g></svg>`}
+
+function msvg(M){ // classic octagram: diamond A-B-C-D (личность/таланты/задача/хвост), square corners F-G-H-I (род), E centre; money/love off the H corner
+  const c=(x,y,n,col,r=17)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="#191426" stroke="${col}" stroke-width="1.5"/><text x="${x}" y="${y}" fill="var(--paper)" font-size="${r>15?15:12}">${n}</text>`;
+  const l=(x,y,t,col="var(--mute)")=>`<text x="${x}" y="${y}" fill="${col}" font-size="10">${t}</text>`;
+  return `<div class="matrix"><svg viewBox="0 0 300 300" role="img" aria-label="Ваша матрица судьбы">
+   <path d="M40 150 L150 40 L260 150 L150 260 Z M72 72 H228 V228 H72 Z M40 150 H260 M150 40 V260 M72 72 L228 228 M228 72 L72 228" fill="none" stroke="var(--line)"/>
+   ${c(72,72,M.F,"var(--mute)",14)}${c(228,72,M.G,"var(--mute)",14)}${c(228,228,M.X,"var(--mute)",14)}${c(72,228,M.I,"var(--mute)",14)}
+   ${c(40,150,M.A,"var(--brass)")}${c(150,40,M.B,"var(--brass)")}${c(260,150,M.C,"var(--brass)")}${c(150,260,M.D,"var(--rose)")}${c(150,150,M.E,"var(--brass)",21)}
+   ${c(266,206,M.money,"var(--sage)",13)}${c(200,262,M.love,"var(--rose)",13)}
+   ${l(40,178,"личность")}${l(150,14,"таланты")}${l(262,122,"задача")}${l(150,290,"кармический хвост")}${l(150,182,"центр")}
+   ${l(72,46,"род отца")}${l(228,46,"род матери")}${l(78,256,"род матери")}${l(272,236,"деньги","var(--sage)")}${l(238,266,"любовь","var(--rose)")}${l(228,204,"род отца")}
+  </svg>
+  <div class="legend">${[["Личность",M.A],["Таланты",M.B],["Задача души",M.C],["Кармический хвост",M.D],["Центр · комфорт",M.E],["Предназначение",M.purpose],["Деньги",M.money],["Любовь и пара",M.love],["Род отца",r22(M.F+M.X)],["Род матери",r22(M.G+M.I)]]
+    .map(([t,n])=>`<span>${t}</span><b>${an(n)}</b>`).join("")}</div></div>`}
+
+// ===== скан ладони по фото: кожа → тёмные складки (локально темнее окружения) → выраженность 4 зон =====
+let PTS=null; // crease pixel indices on a 150×200 grid, session only
+function scanPhoto(src){return new Promise(res=>{const im=new Image();im.onerror=()=>res(null);im.onload=()=>{
+  const W=150,H=200,cv=document.createElement("canvas");cv.width=W;cv.height=H;const x=cv.getContext("2d",{willReadFrequently:true});
+  const s=Math.max(W/im.width,H/im.height),w=im.width*s,h=im.height*s;x.drawImage(im,(W-w)/2,(H-h)/2,w,h);
+  const d=x.getImageData(0,0,W,H).data,N=W*H,L=new Float32Array(N),skin=new Uint8Array(N);let sk=0;
+  for(let i=0;i<N;i++){const r=d[i*4],g=d[i*4+1],b=d[i*4+2];L[i]=.3*r+.59*g+.11*b;
+    if(r>95&&g>40&&b>20&&r>g&&r>b&&r-Math.min(g,b)>15){skin[i]=1;sk++}}
+  const skinRatio=sk/N;if(skinRatio<.15){skin.fill(1);sk=N} // dim/odd light: scan the whole frame
+  const W1=W+1,I=new Float64Array(W1*(H+1));
+  for(let y=0;y<H;y++){let row=0;for(let q=0;q<W;q++){row+=L[y*W+q];I[(y+1)*W1+q+1]=I[y*W1+q+1]+row}}
+  const R=5,diff=new Float32Array(N),vals=[];
+  for(let y=0;y<H;y++)for(let q=0;q<W;q++){const i=y*W+q;if(!skin[i])continue;
+    const x1=Math.max(0,q-R),x2=Math.min(W,q+R+1),y1=Math.max(0,y-R),y2=Math.min(H,y+R+1);
+    diff[i]=(I[y2*W1+x2]-I[y1*W1+x2]-I[y2*W1+x1]+I[y1*W1+x1])/((x2-x1)*(y2-y1))-L[i];vals.push(diff[i])}
+  vals.sort((a,b)=>b-a);const T=Math.max(4,vals.length?vals[Math.floor(vals.length*.07)]:99),pts=[];
+  for(let i=0;i<N;i++)if(skin[i]&&diff[i]>=T)pts.push(i);
+  const zone=(a,b,c,e)=>{let n=0,k=0;for(let y=c*H|0;y<e*H;y++)for(let q=a*W|0;q<b*W;q++){const i=y*W+q;if(skin[i]){k++;if(diff[i]>=T)n++}}return k?n/k:0};
+  const all=pts.length/sk,th=S.hand!=="l";
+  const pct=z=>Math.max(30,Math.min(97,Math.round(60+30*Math.log2((z+1e-4)/(all+1e-4)))));
+  res({pts,scan:{skin:+skinRatio.toFixed(2),n:pts.length,heart:pct(zone(.15,.85,.30,.45)),head:pct(zone(.15,.85,.45,.58)),
+    life:pct(th?zone(.55,.85,.45,.85):zone(.15,.45,.45,.85)),fate:pct(zone(.40,.60,.50,.90))}})};im.src=src})}
+function drawScan(cv,dur){ // photo darkened + detected creases revealed top-down behind the scan ray
+  const x=cv.getContext("2d"),im=new Image();im.onload=()=>{
+  const W=cv.width,H=cv.height,s=Math.max(W/im.width,H/im.height),w=im.width*s,h=im.height*s,k=W/150,t0=performance.now();
+  const f=now=>{const p=dur?Math.min(1,(now-t0)/dur):1;x.drawImage(im,(W-w)/2,(H-h)/2,w,h);x.fillStyle="rgba(25,20,38,.5)";x.fillRect(0,0,W,H);
+    x.fillStyle="#f3cf7a";const lim=p*200;for(const i of PTS){const y=i/150|0;if(y<=lim)x.fillRect((i%150)*k,y*k,k,k)}
+    if(p<1&&cv.isConnected)requestAnimationFrame(f)};requestAnimationFrame(f)};im.src=S.photo}
+const lineIdx=p=>Math.min(3,Math.max(0,Math.floor((p-30)/17)));
+
+function reading(){
+  const d=new Date(S.date+"T12:00"),z=zodiac(d),el=ELEMENT[z.name];
+  const r=rng([S.date,S.time,S.gender,S.hand,S.name.trim().toLowerCase()].join("|"));
+  const now=new Date(),days=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
+  const lucky=[...new Set(Array.from({length:6},()=>1+Math.floor(r()*days)))].slice(0,3).sort((a,b)=>a-b);
+  const ln=k=>S.scan?TEXT[k][lineIdx(S.scan[k])]:pick(r,TEXT[k]);
+  return{z,el,heart:ln("heart"),head:ln("head"),life:ln("life"),fate:ln("fate"),
+    match:MATCH[el].filter(n=>n!==z.name).slice(0,3),lucky,M:matrix(S.date),U:mushel(S.date),
+    advice:S.focus.filter(f=>ADVICE[f]).map(f=>[FOCUS[f],pick(r,ADVICE[f])]),month:now.toLocaleString("ru",{month:"long"}),year:now.getFullYear()}}
+
+const sec=(k,t)=>`<div class="sec"><span class="k">${k}</span><p>${t}</p></div>`;
+const lock=(html,ok)=>ok?html:`<div class="locked" aria-hidden="true"><div class="blur">${html}</div></div>`;
+const an=n=>`${n} · ${ARC[n].n}`;
+const buy=p=>`<button class="cta alt" data-buy="${p}">${PLANS[p].t} — ${money(PLANS[p].p)}</button>`;
+
+function pairHTML(M){
+  if(!S.pdate)return `<p class="sub">Введите дату рождения партнёра — посчитаем энергию и задачу вашей пары.</p>`;
+  const P=matrix(S.pdate),e=r22(M.E+P.E),t=r22(M.D+P.D);
+  return `<p>Энергия пары: <b>${an(e)}</b> · задача пары: <b>${an(t)}</b></p>`+lock(`<p>${ARC[e].l}</p><p>${ARC[t].t}</p>`,has("pair"))+(has("pair")?"":buy("pair"))}
+
+function report(){
+  const R=reading(),M=R.M,U=R.U,name=esc(S.name.trim()),full=has("full");
+  const mus=`${U.a[0]} — ${U.a[1]}`;
+  const rest=`${sec("Личность · аркан "+an(M.A),ARC[M.A].p)}
+   ${sec("Таланты · аркан "+an(M.B),ARC[M.B].k)}
+   ${sec("Предназначение · аркан "+an(M.purpose),`${ARC[M.purpose].k} Небо ${M.sky} и Земля ${M.earth} показывают: до 40 лет задача — найти себя и своё дело, после — делиться найденным с людьми.`)}
+   ${sec("Деньги · аркан "+an(M.money),ARC[M.money].m)}
+   ${sec("Отношения · аркан "+an(M.love),ARC[M.love].l)}
+   ${sec("Кармический хвост · "+M.tail.join("-"),ARC[M.D].t)}
+   ${sec("Центр · зона комфорта "+an(M.E),ARC[M.E].k+" Здесь вы восстанавливаетесь и принимаете лучшие решения.")}
+   ${sec(`Мүшел · ${U.pos}-й год цикла`,`${U.phase} ${U.now?`Сейчас ваш мүшел жас — ${U.jas} лет.`:`Ваш следующий мүшел жас — ${U.jas} лет, год ${U.a[0]} с Наурыза ${U.next}.`}`)}
+   ${sec("Линия головы · ум",R.head)}${sec("Линия жизни · энергия",R.life)}${sec("Линия судьбы · путь",R.fate)}
+   ${R.advice.map(([k,t])=>sec(k+" · "+R.month,t)).join("")}
+   ${sec("Совместимость по знаку",`Сильнее всего вас дополняют ${R.match.join(", ")}. Стихия ${R.el} делает эти союзы спокойными и долгими.`)}
+   ${sec("Удачные дни в "+(/[ьй]$/.test(R.month)?R.month.slice(0,-1)+"е":R.month+"е"),R.lucky.join(", ")+" число. Планируйте важные встречи и решения на эти даты.")}`;
+  const yr=[R.year,R.year+1].map(y=>sec(`${y} год · аркан ${an(M.year(y))}`,ARC[M.year(y)].y)).join("");
+  const plan=PLANS[S.plan];
+  return `<h1>${name}, ваш разбор готов</h1>
+   <div class="sign"><b>${R.z.glyph}</b><div><h2>${R.z.name}</h2><span class="sub">Стихия: ${R.el} · ${S.hand==="l"?"левая":"правая"} рука</span></div></div>
+   <div class="facts"><div><b>${M.A}</b><span>аркан личности</span></div><div><b>${M.life}</b><span>число судьбы</span></div><div><b style="font:500 19px/1.55 var(--body)">${U.a[0]}</b><span>ваш мүшел</span></div></div>
+   ${msvg(M)}
+   ${sec("Аркан личности · "+an(M.A),ARC[M.A].k)}
+   ${sec("Мүшел · "+mus,U.a[2]+(U.now?` ${R.year} — ваш мүшел жылы!`:""))}
+   ${S.scan?`<div class="sec"><span class="k">Скан ладони · найдено ${S.scan.n} точек линий</span>
+     ${PTS&&S.photo?'<div class="palm" style="width:200px;margin:0 auto"><canvas id="rc" width="300" height="400"></canvas></div>':""}
+     <div class="lines">${[["Линия сердца","heart"],["Линия головы","head"],["Линия жизни","life"],["Линия судьбы","fate"]].map(([t,k])=>`<span>${t}</span><div class="meter"><i style="width:${S.scan[k]}%"></i></div><b>${S.scan[k]}%</b>`).join("")}</div>
+     <p class="note">Выраженность линии по фото: насколько складки в этой зоне глубже, чем в среднем по ладони.</p></div>`:""}
+   ${sec("Линия сердца · любовь",R.heart)}
+   ${lock(rest+sec("Род отца · аркан "+an(r22(M.F+M.X)),ARC[r22(M.F+M.X)].k+" Это сила, которую передаёт мужская линия рода.")+sec("Род матери · аркан "+an(r22(M.G+M.I)),ARC[r22(M.G+M.I)].k+" Это сила, которую передаёт женская линия рода."),full)}
+   ${full?"":`<h2>Откройте полный разбор</h2>
+   <p class="sub">Деньги, отношения, предназначение и кармический хвост по матрице, ваш год в цикле мүшел, все линии ладони.</p>
+   <div class="plans">${["full","year"].map(p=>`<button class="opt plan" data-plan="${p}" aria-pressed="${S.plan===p}"><span>${PLANS[p].t}${PLANS[p].hit?'<span class="badge">хит</span>':""}</span><span><s>${money(PLANS[p].old)}</s><b>${money(PLANS[p].p)}</b></span></button>`).join("")}</div>
+   <button class="cta" id="pay">Открыть за ${money(plan.p)}</button>
+   <p class="note">Разовый платёж, без подписок и автосписаний.</p>`}
+   <h2>Прогноз на год</h2>
+   ${lock(yr,has("year"))}${has("year")||!full?"":buy("yearup")}
+   <h2>Совместимость пары</h2>
+   <label for="pdate">Дата рождения партнёра<input type="date" id="pdate" min="1920-01-01" max="2012-12-31" value="${S.pdate}"></label>
+   <div id="pair">${pairHTML(M)}</div>
+   <div id="paybox">${S.payOpen?paybox():""}</div>
+   <p class="note">Линии выделены по вашему фото автоматически, трактовка — по их выраженности и типовым формам; матрица и мүшел рассчитаны точно по дате рождения. Для саморазвития и развлечения.</p>`}
+
+function paybox(){
+  const p=S.plan,P=PLANS[p],link=CONFIG.pay[p];
+  const msg=`Здравствуйте! Оплатил(а) «${P.t}» ${money(P.p)}. Заказ №${S.order}, ${S.name.trim()}. Чек прикрепляю.`;
+  return `<div class="box"><h2>${P.t} — ${money(P.p)}</h2>
+   ${link?`<a class="cta" target="_blank" rel="noopener" href="${link}">Оплатить картой</a><p class="sub">После оплаты пришлите чек — код доступа придёт в ответ.</p>`:
+   `<ol><li>Переведите <b>${money(P.p)}</b> по номеру <b>${CONFIG.kaspi}</b> (${CONFIG.receiver}).</li><li>В комментарии к переводу укажите <b>заказ №${S.order}</b>.</li><li>Пришлите чек — в ответ придёт 6-значный код доступа.</li></ol>`}
+   ${contactLinks(msg,"Отправить чек")}
+   <label for="code">Код доступа<div class="row"><input id="code" inputmode="numeric" maxlength="6" autocomplete="one-time-code"><button id="code-go">Открыть</button></div></label>
+   <p class="err" id="code-msg" role="status"></p></div>`}
+
+function admin(){ // owner-only: #admin → codes for an order number
+  view.innerHTML=`<h1>Коды доступа</h1><label for="ao">Номер заказа<input id="ao" inputmode="numeric" maxlength="5"></label><div id="ac" class="opts"></div>
+   <p class="note">Код привязан к номеру заказа покупателя. «Прогноз на год» открывает и доплату 1 000 ₸.</p>`;
+  document.getElementById("ao").addEventListener("input",e=>{const o=e.target.value.trim();
+    document.getElementById("ac").innerHTML=o.length===5?["full","year","pair"].map(p=>`<div class="sign"><b>${code(o,p)}</b><span class="sub">${PLANS[p].t}</span></div>`).join(""):""})}
+
+function render(){
+  document.getElementById("back").disabled=step===0||step>=QUESTIONS-1;
+  document.getElementById("count").textContent=step<QUESTIONS?`${step+1}/${QUESTIONS}`:"";
+  document.getElementById("bar").style.width=Math.min(100,(step+1)/QUESTIONS*100)+"%";
+  view.innerHTML=STEPS[step]();
+  if(step===1)showSign();
+  if(step===QUESTIONS-1)analyse();
+  const cv=document.getElementById(step===QUESTIONS?"rc":"cv");if(cv&&PTS)drawScan(cv,step===QUESTIONS?0:4200);
+  store.set();
+}
+function go(n){step=n;render();window.scrollTo(0,0);if(n===QUESTIONS-1)lead("quiz")}
+function showSign(){const el=document.getElementById("sign");if(!S.date){el.innerHTML="";return}
+  const z=zodiac(new Date(S.date+"T12:00")),U=mushel(S.date);
+  el.innerHTML=`<div class="sign"><b>${z.glyph}</b><div><h2>${z.name}</h2><span class="sub">Стихия: ${ELEMENT[z.name]} · мүшел: ${U.a[0]}</span></div></div>`}
+function analyse(){
+  const rows=[...document.querySelectorAll("#st div")],m=document.getElementById("m");let i=0;
+  const tick=()=>{if(step!==QUESTIONS-1)return;rows.forEach((r,j)=>{r.className=j<i?"ok":j===i?"on":""});m.style.width=i/rows.length*100+"%";
+    if(i++<rows.length)setTimeout(tick,900);else setTimeout(()=>go(QUESTIONS),500)};tick()}
+function openPay(p){S.plan=p;S.payOpen=true;render();document.getElementById("paybox").scrollIntoView({behavior:"smooth"});lead("pay:"+p)}
+function tryCode(){
+  const v=document.getElementById("code").value.trim(),hit=Object.keys(PLANS).find(p=>p!=="yearup"&&code(S.order,p)===v);
+  if(!hit){document.getElementById("code-msg").textContent="Код не подошёл. Проверьте цифры или напишите нам.";return}
+  S.own=[...new Set([...S.own,...PLANS[hit].u])];S.payOpen=false;lead("paid:"+hit);render();window.scrollTo(0,0)}
+
+view.addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b){if(e.target.closest("#palm"))file.click();return}
+  if(b.dataset.k){const k=b.dataset.k,v=b.dataset.v;
+    if(b.hasAttribute("data-multi")){S[k]=S[k].includes(v)?S[k].filter(x=>x!==v):[...S[k],v];render()}
+    else{S[k]=v;b.setAttribute("aria-pressed","true");setTimeout(()=>go(step+1),180)}return}
+  if(b.dataset.plan){S.plan=b.dataset.plan;view.querySelectorAll("[data-plan]").forEach(x=>x.setAttribute("aria-pressed",x===b));document.getElementById("pay").textContent=`Открыть за ${money(PLANS[S.plan].p)}`;if(S.payOpen)document.getElementById("paybox").innerHTML=paybox();return}
+  if(b.dataset.buy){openPay(b.dataset.buy);return}
+  if(b.id==="pay"){openPay(S.plan);return}
+  if(b.id==="code-go"){tryCode();return}
+  if(b.id==="retake"){file.click();return}
+  if(b.id==="skip"){if(step===2)S.time="";go(step+1);return}
+  if(b.id==="next"){if(step===6&&!S.photo){file.click();return}go(step+1)}
+});
+view.addEventListener("input",e=>{
+  const t=e.target;if(t.id==="date"){S.date=t.value;showSign();document.getElementById("next").disabled=!S.date}
+  if(t.id==="time")S.time=t.value;
+  if(t.id==="name"){S.name=t.value;document.getElementById("next").disabled=!t.value.trim()}
+  if(t.id==="contact"){S.contact=t.value;document.getElementById("next").disabled=!okContact(t.value)}
+  if(t.id==="pdate"){S.pdate=t.value;document.getElementById("pair").innerHTML=pairHTML(matrix(S.date));store.set()}
+});
+view.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="code")tryCode()});
+const file=document.getElementById("file");
+file.addEventListener("change",()=>{const f=file.files[0];if(!f)return;const r=new FileReader();r.onload=async()=>{S.photo=r.result;S.scan=null;render();const o=await scanPhoto(S.photo);if(o){PTS=o.pts;S.scan=o.scan}render()};r.readAsDataURL(f);file.value=""});
+document.getElementById("back").addEventListener("click",()=>step>0&&go(step-1));
+if(location.hash==="#admin")admin();else render();
+</script>
+</body>
+</html>
