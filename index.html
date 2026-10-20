@@ -509,6 +509,16 @@ function admin(){ // owner-only: #admin → codes for an order number
   document.getElementById("ao").addEventListener("input",e=>{const o=e.target.value.trim();
     document.getElementById("ac").innerHTML=o.length===5?["full","year","pair"].map(p=>`<div class="sign"><b>${code(o,p)}</b><span class="sub">${PLANS[p].t}</span></div>`).join(""):""})}
 
+function replyTool(){ // owner-only: #reply → ready Kazakh answer for a birth date from comments (Threads/IG)
+  S.lang="kz";
+  view.innerHTML=`<h1>Жауап генераторы</h1><label for="rd">Туған күні<input type="date" id="rd" min="1920-01-01" max="2025-12-31"></label>
+   <textarea id="rt" rows="7" style="width:100%;background:var(--ink2);color:var(--paper);border:1px solid var(--line);border-radius:12px;padding:14px;font:inherit"></textarea>
+   <button class="cta" id="rc2">Көшіру</button>`;
+  const rd=document.getElementById("rd"),rt=document.getElementById("rt");
+  rd.addEventListener("input",()=>{if(!rd.value)return;const M=matrix(rd.value),U=mushel(rd.value),a=ARC_KZ[M.A];
+    rt.value=`Тұлға арканыңыз — ${M.A} · ${a.n} ✨ ${a.k}\nМүшеліңіз — ${U.a[0]}. ${U.now?`Биыл сіздің мүшел жылыңыз (${U.jas} жас)!`:`Келесі мүшел жасыңыз — ${U.jas}.`}\nАқша, махаббат және кармалық құйрық — толық талдау mushel.asia сайтында 🙌`});
+  document.getElementById("rc2").addEventListener("click",()=>{rt.select();navigator.clipboard?.writeText(rt.value)})}
+
 function chrome(){ // header/footer texts follow the language
   document.documentElement.lang=T("ru","kk");
   document.title=T("Ладонь и Звёзды","Алақан мен Жұлдыз");
@@ -570,7 +580,7 @@ const file=document.getElementById("file");
 file.addEventListener("change",()=>{const f=file.files[0];if(!f)return;const r=new FileReader();r.onload=async()=>{S.photo=r.result;S.scan=null;render();const o=await scanPhoto(S.photo);if(o){PTS=o.pts;S.scan=o.scan}render()};r.readAsDataURL(f);file.value=""});
 document.getElementById("back").addEventListener("click",()=>step>0&&go(step-1));
 document.getElementById("lang").addEventListener("click",()=>{S.lang=S.lang==="ru"?"kz":"ru";render()});
-if(location.hash==="#admin")admin();else render();
+if(location.hash==="#admin")admin();else if(location.hash==="#reply"){chrome();replyTool()}else render();
 </script>
 </body>
 </html>
