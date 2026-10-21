@@ -495,8 +495,13 @@ const payLabel=()=>T(`Открыть за ${money(PLANS[S.plan].p)}`,`${money(PL
 function paybox(){
   const p=S.plan,P=PLANS[p],link=CONFIG.pay[p];
   const msg=T(`Здравствуйте! Оплатил(а) «${P.t}» ${money(P.p)}. Заказ №${S.order}, ${S.name.trim()}. Чек прикрепляю.`,`Сәлеметсіз бе! «${P.tk}» үшін ${money(P.p)} төледім. Тапсырыс №${S.order}, ${S.name.trim()}. Чекті жіберемін.`);
+  // no static card link yet: client asks in WhatsApp, owner replies with a one-time Forte payment link
+  const ask=T(`Здравствуйте! Хочу оплатить картой «${P.t}» ${money(P.p)}. Заказ №${S.order}, ${S.name.trim()}. Пришлите ссылку на оплату.`,`Сәлеметсіз бе! «${P.tk}» үшін ${money(P.p)} картамен төлегім келеді. Тапсырыс №${S.order}, ${S.name.trim()}. Төлем сілтемесін жіберіңізші.`);
+  const card=link?"":`<a class="cta" target="_blank" rel="noopener" href="${wa(ask)}">${T("Оплатить картой Visa / Mastercard","Visa / Mastercard картасымен төлеу")}</a>
+   <p class="sub">${T("Пришлём защищённую ссылку ForteBank на оплату в WhatsApp. После оплаты придёт код доступа.","WhatsApp-қа ForteBank қорғалған төлем сілтемесін жібереміз. Төлегеннен кейін қолжетімділік коды келеді.")}</p>
+   <p class="note">${T("или переводом:","немесе аударым арқылы:")}</p>`;
   return `<div class="box"><h2>${ptitle(p)} — ${money(P.p)}</h2>
-   ${link?`<a class="cta" target="_blank" rel="noopener" href="${link}">${T("Оплатить картой","Картамен төлеу")}</a><p class="sub">${T("После оплаты пришлите чек — код доступа придёт в ответ.","Төлегеннен кейін чекті жіберіңіз — жауабында қолжетімділік коды келеді.")}</p>`:
+   ${card}${link?`<a class="cta" target="_blank" rel="noopener" href="${link}">${T("Оплатить картой","Картамен төлеу")}</a><p class="sub">${T("После оплаты пришлите чек — код доступа придёт в ответ.","Төлегеннен кейін чекті жіберіңіз — жауабында қолжетімділік коды келеді.")}</p>`:
    T(`<ol><li>Переведите <b>${money(P.p)}</b> по номеру <b>${CONFIG.kaspi}</b> (${CONFIG.receiver}).</li><li>В комментарии к переводу укажите <b>заказ №${S.order}</b>.</li><li>Пришлите чек — в ответ придёт 6-значный код доступа.</li></ol>`,
      `<ol><li><b>${money(P.p)}</b> соманы <b>${CONFIG.kaspi}</b> нөміріне аударыңыз (${CONFIG.receiver}).</li><li>Аударма түсініктемесіне <b>№${S.order} тапсырыс</b> деп жазыңыз.</li><li>Чекті жіберіңіз — жауабында 6 таңбалы қолжетімділік коды келеді.</li></ol>`)}
    ${contactLinks(msg,T("Отправить чек в WhatsApp","Чекті WhatsApp-қа жіберу"))}
