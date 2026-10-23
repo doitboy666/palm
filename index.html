@@ -160,7 +160,8 @@ const CONFIG={
   tg:"",                     // Telegram ник без @ (пусто = кнопки нет)
   kaspi:"+7 778 471 45 85",  // номер для перевода
   receiver:"ИП Doitboy",
-  kaspiPay:"https://pay.kaspi.kz/pay/ooyyed06", // Kaspi Pay static QR / payment link (amount entered by payer)     // как получатель видится в Kaspi
+  kaspiPay:"https://pay.kaspi.kz/pay/ooyyed06", // Kaspi Pay static QR (сумму вводит клиент) — запасной вариант
+  api:"",                    // адрес посредника xpayment (Cloudflare Worker), напр. "https://mushel-pay.<ник>.workers.dev"; пусто = только статичная ссылка
   pay:{full:"",year:"",yearup:"",pair:""}, // ссылки оплаты (Forte / Freedom Pay / Kaspi), когда появятся
   form:"",                   // Google Form ".../formResponse" для сбора контактов (пусто = не отправлять)
   fields:{name:"entry.1",contact:"entry.2",date:"entry.3",order:"entry.4",stage:"entry.5"},
@@ -534,7 +535,7 @@ function paybox(){
   // Kaspi Pay static QR link: payer types the amount in Kaspi; card (Forte) still via a one-time link sent in WhatsApp
   const ask=T(`Здравствуйте! Хочу оплатить картой «${P.t}» ${money(P.p)}. Заказ №${S.order}, ${S.name.trim()}. Пришлите ссылку на оплату.`,`Сәлеметсіз бе! «${P.tk}» үшін ${money(P.p)} картамен төлегім келеді. Тапсырыс №${S.order}, ${S.name.trim()}. Төлем сілтемесін жіберіңізші.`);
   return `<div class="box"><h2>${ptitle(p)} — ${money(P.p)}</h2>
-   <a class="cta" target="_blank" rel="noopener" href="${CONFIG.kaspiPay}">${T("Оплатить через Kaspi","Kaspi арқылы төлеу")}</a>
+   ${CONFIG.api?`<button class="cta" id="kaspi-auto">${T("Оплатить через Kaspi","Kaspi арқылы төлеу")}</button><p class="sub" id="kaspi-st" role="status">${T(`Откроется Kaspi на сумму ${money(P.p)}. После оплаты отчёт откроется здесь сам.`,`Kaspi ${money(P.p)} сомаға ашылады. Төлегеннен кейін есеп осында өзі ашылады.`)}</p><p class="note">${T("Если отчёт не открылся — оплатите по ссылке и пришлите чек:","Есеп ашылмаса — сілтеме арқылы төлеп, чекті жіберіңіз:")}</p><a class="cta alt" target="_blank" rel="noopener" href="${CONFIG.kaspiPay}">Kaspi QR</a>`:`<a class="cta" target="_blank" rel="noopener" href="${CONFIG.kaspiPay}">${T("Оплатить через Kaspi","Kaspi арқылы төлеу")}</a>`}
    ${T(`<ol><li>В Kaspi введите сумму <b>${money(P.p)}</b> и оплатите (получатель — ИП DOITBOY).</li><li>Пришлите чек в WhatsApp — номер заказа <b>№${S.order}</b> подставится сам.</li><li>В ответ придёт 6-значный код доступа.</li></ol>`,
      `<ol><li>Kaspi-да <b>${money(P.p)}</b> соманы енгізіп төлеңіз (алушы — ИП DOITBOY).</li><li>Чекті WhatsApp-қа жіберіңіз — <b>№${S.order}</b> тапсырыс нөмірі өзі қойылады.</li><li>Жауабында 6 таңбалы қолжетімділік коды келеді.</li></ol>`)}
    ${contactLinks(msg,T("Отправить чек в WhatsApp","Чекті WhatsApp-қа жіберу"),true)}
@@ -590,8 +591,19 @@ function analyse(){
   const tick=()=>{if(step!==QUESTIONS-1)return;rows.forEach((r,j)=>{r.className=j<i?"ok":j===i?"on":""});m.style.width=i/rows.length*100+"%";
     if(i++<rows.length)setTimeout(tick,900);else setTimeout(()=>go(QUESTIONS),500)};tick()}
 function openPay(p){S.plan=p;S.payOpen=true;render();document.getElementById("paybox").scrollIntoView({behavior:"smooth"});lead("pay:"+p)}
-function tryCode(){
-  const v=document.getElementById("code").value.trim(),hit=Object.keys(PLANS).find(p=>p!=="yearup"&&code(S.order,p)===v);
+// xpayment via Worker: exact-amount Kaspi QR, then poll until COMPLETED and unlock with the code the Worker returns
+async function kaspiAuto(){
+  const st=document.getElementById("kaspi-st"),w=window.open("","_blank"); // open before await so the popup isn't blocked
+  if(!(S.payId||"").startsWith(S.order+"-"+S.plan+"-"))S.payId=`${S.order}-${S.plan}-${Math.random().toString(36).slice(2,10)}`;store.set();
+  st.textContent=T("Создаём счёт…","Шот жасалып жатыр…");
+  try{const d=await (await fetch(CONFIG.api+"/pay",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:S.payId})})).json();
+    if(!d.url)throw 0;if(w)w.location=d.url;else location.href=d.url;
+    st.textContent=T("Ждём оплату в Kaspi… отчёт откроется сам.","Kaspi-дағы төлемді күтудеміз… есеп өзі ашылады.");pollPay(0)}
+  catch{if(w)w.close();st.textContent=T("Не удалось создать счёт. Оплатите по ссылке Kaspi QR ниже.","Шот жасалмады. Төмендегі Kaspi QR сілтемесі арқылы төлеңіз.")}}
+function pollPay(n){if(!CONFIG.api||!S.payId||n>150)return; // ~10 min
+  setTimeout(async()=>{try{const d=await (await fetch(CONFIG.api+"/status?id="+encodeURIComponent(S.payId))).json();if(d.paid){S.payId="";tryCode(d.code);return}}catch{}pollPay(n+1)},4000)}
+function tryCode(given){
+  const v=(given||document.getElementById("code").value).trim(),hit=Object.keys(PLANS).find(p=>p!=="yearup"&&code(S.order,p)===v);
   if(!hit){document.getElementById("code-msg").textContent=T("Код не подошёл. Проверьте цифры или напишите нам.","Код сәйкес келмеді. Сандарды тексеріңіз немесе бізге жазыңыз.");return}
   S.own=[...new Set([...S.own,...PLANS[hit].u])];S.payOpen=false;lead("paid:"+hit);render();window.scrollTo(0,0)}
 
@@ -604,6 +616,7 @@ view.addEventListener("click",e=>{
   if(b.dataset.buy){openPay(b.dataset.buy);return}
   if(b.id==="pay"){openPay(S.plan);return}
   if(b.id==="code-go"){tryCode();return}
+  if(b.id==="kaspi-auto"){kaspiAuto();return}
   if(b.id==="retake"){file.click();return}
   if(b.id==="skip"){if(step===2)S.time="";go(step+1);return}
   if(b.id==="next"){if(step===6&&!S.photo){file.click();return}go(step+1)}
@@ -620,7 +633,7 @@ const file=document.getElementById("file");
 file.addEventListener("change",()=>{const f=file.files[0];if(!f)return;const r=new FileReader();r.onload=async()=>{S.photo=r.result;S.scan=null;render();const o=await scanPhoto(S.photo);if(o){PTS=o.pts;S.scan=o.scan}render()};r.readAsDataURL(f);file.value=""});
 document.getElementById("back").addEventListener("click",()=>step>0&&go(step-1));
 document.getElementById("lang").addEventListener("click",()=>{S.lang=S.lang==="ru"?"kz":"ru";render()});
-if(location.hash==="#admin")admin();else if(location.hash==="#reply"){chrome();replyTool()}else render();
+if(location.hash==="#admin")admin();else if(location.hash==="#reply"){chrome();replyTool()}else{render();if(S.payId&&step===QUESTIONS)pollPay(0)} // back from Kaspi: keep waiting
 </script>
 </body>
 </html>
