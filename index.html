@@ -597,11 +597,11 @@ async function kaspiAuto(){
   if(!(S.payId||"").startsWith(S.order+"-"+S.plan+"-"))S.payId=`${S.order}-${S.plan}-${Math.random().toString(36).slice(2,10)}`;store.set();
   st.textContent=T("Создаём счёт…","Шот жасалып жатыр…");
   try{const d=await (await fetch(CONFIG.api+"/pay",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:S.payId})})).json();
-    if(!d.url)throw 0;if(w)w.location=d.url;else location.href=d.url;
+    if(!d.url)throw 0;S.payPid=d.pid||"";store.set();if(w)w.location=d.url;else location.href=d.url;
     st.textContent=T("Ждём оплату в Kaspi… отчёт откроется сам.","Kaspi-дағы төлемді күтудеміз… есеп өзі ашылады.");pollPay(0)}
   catch{if(w)w.close();st.textContent=T("Не удалось создать счёт. Оплатите по ссылке Kaspi QR ниже.","Шот жасалмады. Төмендегі Kaspi QR сілтемесі арқылы төлеңіз.")}}
 function pollPay(n){if(!CONFIG.api||!S.payId||n>150)return; // ~10 min
-  setTimeout(async()=>{try{const d=await (await fetch(CONFIG.api+"/status?id="+encodeURIComponent(S.payId))).json();if(d.paid){S.payId="";tryCode(d.code);return}}catch{}pollPay(n+1)},4000)}
+  setTimeout(async()=>{try{const d=await (await fetch(CONFIG.api+"/status?id="+encodeURIComponent(S.payId)+"&pid="+encodeURIComponent(S.payPid||""))).json();if(d.paid){S.payId="";tryCode(d.code);return}}catch{}pollPay(n+1)},4000)}
 function tryCode(given){
   const v=(given||document.getElementById("code").value).trim(),hit=Object.keys(PLANS).find(p=>p!=="yearup"&&code(S.order,p)===v);
   if(!hit){document.getElementById("code-msg").textContent=T("Код не подошёл. Проверьте цифры или напишите нам.","Код сәйкес келмеді. Сандарды тексеріңіз немесе бізге жазыңыз.");return}
