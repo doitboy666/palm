@@ -159,7 +159,8 @@ const CONFIG={
   wa:"77784714585",          // WhatsApp для чеков и заявок, только цифры
   tg:"",                     // Telegram ник без @ (пусто = кнопки нет)
   kaspi:"+7 778 471 45 85",  // номер для перевода
-  receiver:"ИП Doitboy",     // как получатель видится в Kaspi
+  receiver:"ИП Doitboy",
+  kaspiPay:"https://pay.kaspi.kz/pay/ooyyed06", // Kaspi Pay static QR / payment link (amount entered by payer)     // как получатель видится в Kaspi
   pay:{full:"",year:"",yearup:"",pair:""}, // ссылки оплаты (Forte / Freedom Pay / Kaspi), когда появятся
   form:"",                   // Google Form ".../formResponse" для сбора контактов (пусто = не отправлять)
   fields:{name:"entry.1",contact:"entry.2",date:"entry.3",order:"entry.4",stage:"entry.5"},
@@ -530,16 +531,15 @@ const payLabel=()=>T(`Открыть за ${money(PLANS[S.plan].p)}`,`${money(PL
 function paybox(){
   const p=S.plan,P=PLANS[p],link=CONFIG.pay[p];
   const msg=T(`Здравствуйте! Оплатил(а) «${P.t}» ${money(P.p)}. Заказ №${S.order}, ${S.name.trim()}. Чек прикрепляю.`,`Сәлеметсіз бе! «${P.tk}» үшін ${money(P.p)} төледім. Тапсырыс №${S.order}, ${S.name.trim()}. Чекті жіберемін.`);
-  // no static card link yet: client asks in WhatsApp, owner replies with a one-time Forte payment link
+  // Kaspi Pay static QR link: payer types the amount in Kaspi; card (Forte) still via a one-time link sent in WhatsApp
   const ask=T(`Здравствуйте! Хочу оплатить картой «${P.t}» ${money(P.p)}. Заказ №${S.order}, ${S.name.trim()}. Пришлите ссылку на оплату.`,`Сәлеметсіз бе! «${P.tk}» үшін ${money(P.p)} картамен төлегім келеді. Тапсырыс №${S.order}, ${S.name.trim()}. Төлем сілтемесін жіберіңізші.`);
-  const card=link?"":`<a class="cta" target="_blank" rel="noopener" href="${wa(ask)}">${T("Оплатить картой Visa / Mastercard","Visa / Mastercard картасымен төлеу")}</a>
-   <p class="sub">${T("Пришлём защищённую ссылку ForteBank на оплату в WhatsApp. После оплаты придёт код доступа.","WhatsApp-қа ForteBank қорғалған төлем сілтемесін жібереміз. Төлегеннен кейін қолжетімділік коды келеді.")}</p>
-   <p class="note">${T("или переводом:","немесе аударым арқылы:")}</p>`;
   return `<div class="box"><h2>${ptitle(p)} — ${money(P.p)}</h2>
-   ${card}${link?`<a class="cta" target="_blank" rel="noopener" href="${link}">${T("Оплатить картой","Картамен төлеу")}</a><p class="sub">${T("После оплаты пришлите чек — код доступа придёт в ответ.","Төлегеннен кейін чекті жіберіңіз — жауабында қолжетімділік коды келеді.")}</p>`:
-   T(`<ol><li>Переведите <b>${money(P.p)}</b> по номеру <b>${CONFIG.kaspi}</b> (${CONFIG.receiver}).</li><li>В комментарии к переводу укажите <b>заказ №${S.order}</b>.</li><li>Пришлите чек — в ответ придёт 6-значный код доступа.</li></ol>`,
-     `<ol><li><b>${money(P.p)}</b> соманы <b>${CONFIG.kaspi}</b> нөміріне аударыңыз (${CONFIG.receiver}).</li><li>Аударма түсініктемесіне <b>№${S.order} тапсырыс</b> деп жазыңыз.</li><li>Чекті жіберіңіз — жауабында 6 таңбалы қолжетімділік коды келеді.</li></ol>`)}
-   ${contactLinks(msg,T("Отправить чек в WhatsApp","Чекті WhatsApp-қа жіберу"),!link)}
+   <a class="cta" target="_blank" rel="noopener" href="${CONFIG.kaspiPay}">${T("Оплатить через Kaspi","Kaspi арқылы төлеу")}</a>
+   ${T(`<ol><li>В Kaspi введите сумму <b>${money(P.p)}</b> и оплатите (получатель — ИП DOITBOY).</li><li>Пришлите чек в WhatsApp — номер заказа <b>№${S.order}</b> подставится сам.</li><li>В ответ придёт 6-значный код доступа.</li></ol>`,
+     `<ol><li>Kaspi-да <b>${money(P.p)}</b> соманы енгізіп төлеңіз (алушы — ИП DOITBOY).</li><li>Чекті WhatsApp-қа жіберіңіз — <b>№${S.order}</b> тапсырыс нөмірі өзі қойылады.</li><li>Жауабында 6 таңбалы қолжетімділік коды келеді.</li></ol>`)}
+   ${contactLinks(msg,T("Отправить чек в WhatsApp","Чекті WhatsApp-қа жіберу"),true)}
+   <p class="note">${T("Нет Kaspi? Оплата картой Visa / Mastercard:","Kaspi жоқ па? Visa / Mastercard картасымен:")}</p>
+   <a class="cta alt" target="_blank" rel="noopener" href="${link||wa(ask)}">${T("Оплатить картой","Картамен төлеу")}</a>
    <label for="code">${T("Код доступа","Қолжетімділік коды")}<div class="row"><input id="code" inputmode="numeric" maxlength="6" autocomplete="one-time-code"><button id="code-go">${T("Открыть","Ашу")}</button></div></label>
    <p class="err" id="code-msg" role="status"></p></div>`}
 
@@ -567,8 +567,8 @@ function chrome(){ // header/footer texts follow the language
   document.getElementById("lang").setAttribute("aria-label",T("Қазақ тіліне ауысу","Переключить на русский"));
   const a=(h,t)=>`<a href="${h}" style="color:inherit">${t}</a>`;
   document.getElementById("foot").innerHTML=T(
-   `Для саморазвития и развлечения. Не является медицинским, финансовым или юридическим советом.<br>Цены: полный отчёт 1 990 ₸ · с прогнозом на год 2 990 ₸ · прогноз на год 1 000 ₸ · совместимость 1 490 ₸. Оплата картой Visa / Mastercard, разовый платёж.<br>${a("oplata.html","Услуги и оплата")} · ${a("oferta.html","Оферта и возврат")} · ${a("privacy.html","Конфиденциальность")}<br>ИП Doitboy · ИИН/БИН 950212350353 · г. Астана, ул. Бараева, 18/1-243 · ${a("https://wa.me/77784714585","+7 778 471 45 85")}`,
-   `Өзін-өзі дамыту және көңіл көтеру үшін. Медициналық, қаржылық не заңгерлік кеңес емес.<br>Бағасы: толық есеп 1 990 ₸ · жылдық болжаммен 2 990 ₸ · жылдық болжам 1 000 ₸ · үйлесімділік 1 490 ₸. Visa / Mastercard картасымен, бір реттік төлем.<br>${a("oplata.html","Қызметтер мен төлем")} · ${a("oferta.html","Оферта және қайтару (орыс тілінде)")} · ${a("privacy.html","Құпиялылық")}<br>ЖК Doitboy · ЖСН/БСН 950212350353 · Астана қ., Бараев к-сі, 18/1-243 · ${a("https://wa.me/77784714585","+7 778 471 45 85")}`)}
+   `Для саморазвития и развлечения. Не является медицинским, финансовым или юридическим советом.<br>Цены: полный отчёт 1 990 ₸ · с прогнозом на год 2 990 ₸ · прогноз на год 1 000 ₸ · совместимость 1 490 ₸. Оплата через Kaspi или картой Visa / Mastercard, разовый платёж.<br>${a("oplata.html","Услуги и оплата")} · ${a("oferta.html","Оферта и возврат")} · ${a("privacy.html","Конфиденциальность")}<br>ИП Doitboy · ИИН/БИН 950212350353 · г. Астана, ул. Бараева, 18/1-243 · ${a("https://wa.me/77784714585","+7 778 471 45 85")}`,
+   `Өзін-өзі дамыту және көңіл көтеру үшін. Медициналық, қаржылық не заңгерлік кеңес емес.<br>Бағасы: толық есеп 1 990 ₸ · жылдық болжаммен 2 990 ₸ · жылдық болжам 1 000 ₸ · үйлесімділік 1 490 ₸. Kaspi арқылы не Visa / Mastercard картасымен, бір реттік төлем.<br>${a("oplata.html","Қызметтер мен төлем")} · ${a("oferta.html","Оферта және қайтару (орыс тілінде)")} · ${a("privacy.html","Құпиялылық")}<br>ЖК Doitboy · ЖСН/БСН 950212350353 · Астана қ., Бараев к-сі, 18/1-243 · ${a("https://wa.me/77784714585","+7 778 471 45 85")}`)}
 
 function render(){
   chrome();
